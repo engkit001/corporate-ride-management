@@ -1,8 +1,11 @@
 package com.in6225.crms.driverservice.service;
 
+import com.in6225.crms.driverservice.enums.DriverStatus;
 import com.in6225.crms.driverservice.exception.DriverNotFoundException;
-import com.in6225.crms.driverservice.model.Driver;
+import com.in6225.crms.driverservice.entity.Driver;
+import com.in6225.crms.driverservice.exception.InvalidDriverStateException;
 import com.in6225.crms.driverservice.repository.DriverRepository;
+import com.in6225.crms.rideevents.RideCancelledEvent;
 import com.in6225.crms.rideevents.RideCompletedEvent;
 import com.in6225.crms.rideevents.RideRequestedEvent;
 import com.in6225.crms.rideevents.RideStartedEvent;
@@ -22,26 +25,38 @@ public class DriverService {
         this.kafkaTemplate = kafkaTemplate;
     }
 
+    // Get driver by id
+    public Driver getDriverById(String id) {
+        Optional<Driver> driverOptional = driverRepository.findById(id);
+
+        if (driverOptional.isEmpty()) {
+            throw new DriverNotFoundException(id);
+        }
+
+        return driverOptional.get();
+    }
+
     // Get drivers by status
     public List<Driver> getDriversByStatus(String status) {
         if (status == null || status.isEmpty()) {
             return driverRepository.findAll(); // Return all drivers if no status is provided
         }
-        return driverRepository.findAllByStatus(status);
+        DriverStatus driverStatus = DriverStatus.valueOf(status);
+        return driverRepository.findAllByStatus(driverStatus);
     }
 
     // Register a new driver
     public Driver registerDriver(Driver driver) {
-        driver.setStatus("AVAILABLE");
+        driver.setStatus(DriverStatus.AVAILABLE);
         return driverRepository.save(driver);
     }
 
     public void handleRideRequestedEvent(RideRequestedEvent rideRequestedEvent) {
-        Optional<Driver> availableDriver = driverRepository.findFirstByStatus("AVAILABLE");
+        Optional<Driver> availableDriver = driverRepository.findFirstByStatus(DriverStatus.AVAILABLE);
 
         if (availableDriver.isPresent()) {
             Driver driver = availableDriver.get();
-            driver.setStatus("ASSIGNED");
+            driver.setStatus(DriverStatus.ASSIGNED);
             driverRepository.save(driver);
 
             // Publish DRIVER_ASSIGNED event
@@ -53,25 +68,30 @@ public class DriverService {
     }
 
     public void handleRideStartedEvent(RideStartedEvent rideStartedEvent) {
-        Optional<Driver> driverOptional = driverRepository.findById(rideStartedEvent.getDriverId());
-        if (driverOptional.isPresent()) {
-            Driver driver = driverOptional.get();
-            driver.setStatus("BUSY");
-            driverRepository.save(driver);
-
+        Driver driver = this.getDriverById(rideStartedEvent.getDriverId());
+        if (driver.getStatus() != DriverStatus.ASSIGNED) {
+            throw new InvalidDriverStateException("Driver is not ASSIGNED");
         }
-        throw new DriverNotFoundException(rideStartedEvent.getDriverId());
+        driver.setStatus(DriverStatus.BUSY);
+        driverRepository.save(driver);
     }
 
     public void handleRideCompletedEvent(RideCompletedEvent rideCompletedEvent) {
-        Optional<Driver> driverOptional = driverRepository.findById(rideCompletedEvent.getDriverId());
-        if (driverOptional.isPresent()) {
-            Driver driver = driverOptional.get();
-            driver.setStatus("AVAILABLE");
-            driverRepository.save(driver);
-
+        Driver driver = this.getDriverById(rideCompletedEvent.getDriverId());
+        if (driver.getStatus() != DriverStatus.BUSY) {
+            throw new InvalidDriverStateException("Driver is not BUSY");
         }
-        throw new DriverNotFoundException(rideCompletedEvent.getDriverId());
+        driver.setStatus(DriverStatus.AVAILABLE);
+        driverRepository.save(driver);
+    }
+
+    public void handleRideCancelledEvent(RideCancelledEvent rideCancelledEvent) {
+        Driver driver = this.getDriverById(rideCancelledEvent.getDriverId());
+        if (driver.getStatus() != DriverStatus.ASSIGNED) {
+            throw new InvalidDriverStateException("Driver is not ASSIGNED");
+        }
+        driver.setStatus(DriverStatus.AVAILABLE);
+        driverRepository.save(driver);
     }
 
 }

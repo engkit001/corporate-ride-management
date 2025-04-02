@@ -1,6 +1,7 @@
 package com.in6225.crms.driverservice.controller;
 
-import com.in6225.crms.driverservice.model.Driver;
+import com.in6225.crms.driverservice.entity.Driver;
+import com.in6225.crms.driverservice.enums.DriverStatus;
 import com.in6225.crms.driverservice.service.DriverService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -16,6 +17,12 @@ public class DriverController {
 
     public DriverController(DriverService driverService) {
         this.driverService = driverService;
+    }
+
+    // Get driver by id
+    @GetMapping("/{id}")
+    public ResponseEntity<Driver> getDriverById(@PathVariable String id) {
+        return ResponseEntity.ok(driverService.getDriverById(id));
     }
 
     // Get drivers by status

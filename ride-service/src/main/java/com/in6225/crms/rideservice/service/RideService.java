@@ -2,8 +2,10 @@ package com.in6225.crms.rideservice.service;
 
 import com.in6225.crms.rideevents.DriverAssignedEvent;
 import com.in6225.crms.rideevents.NoDriverAvailableEvent;
+import com.in6225.crms.rideservice.enums.RideStatus;
+import com.in6225.crms.rideservice.exception.InvalidRideStateException;
 import com.in6225.crms.rideservice.exception.RideNotFoundException;
-import com.in6225.crms.rideservice.model.Ride;
+import com.in6225.crms.rideservice.entity.Ride;
 import com.in6225.crms.rideservice.repository.RideRepository;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
@@ -23,7 +25,6 @@ public class RideService {
     }
 
     public Ride getRideById(Long id) {
-        // Find the ride
         Optional<Ride> rideOptional = rideRepository.findById(id);
 
         if (rideOptional.isEmpty()) {
@@ -41,7 +42,7 @@ public class RideService {
     }
 
     public Ride requestRide(Ride ride) {
-        ride.setStatus("REQUESTED");
+        ride.setStatus(RideStatus.REQUESTED);
         ride.setRideRequestedTime(LocalDateTime.now());
         Ride savedRide = rideRepository.save(ride);
 
@@ -52,61 +53,71 @@ public class RideService {
     }
 
     public Ride startRide(Long id) {
-        Optional<Ride> rideOptional = rideRepository.findById(id);
-        if (rideOptional.isPresent()) {
-            Ride ride = rideOptional.get();
-            ride.setStatus("ONGOING");
-            ride.setRideStartTime(LocalDateTime.now());
-            rideRepository.save(ride);
-
-            // Publish RIDE_STARTED event to Kafka
-            kafkaTemplate.send("ride-started", String.valueOf(ride.getId()) + ":" + ride.getDriverId());
-
-            return ride;
+        Ride ride = this.getRideById(id);
+        if (ride.getStatus() != RideStatus.ASSIGNED) {
+            throw new InvalidRideStateException("Ride must be ASSIGNED before starting.");
         }
-        throw new RideNotFoundException(id);
+        ride.setStatus(RideStatus.ONGOING);
+        ride.setRideStartTime(LocalDateTime.now());
+        rideRepository.save(ride);
+
+        // Publish RIDE_STARTED event to Kafka
+        kafkaTemplate.send("ride-started", String.valueOf(ride.getId()) + ":" + ride.getDriverId());
+
+        return ride;
     }
 
     public Ride completeRide(Long id) {
-        Optional<Ride> rideOptional = rideRepository.findById(id);
-        if (rideOptional.isPresent()) {
-            Ride ride = rideOptional.get();
-            ride.setRideEndTime(LocalDateTime.now());
-            ride.setStatus("COMPLETED");
-            rideRepository.save(ride);
-
-            // Publish RIDE_COMPLETED event to Kafka
-            kafkaTemplate.send("ride-completed", String.valueOf(ride.getId()) + ":" + ride.getDriverId());
-
-            return ride;
+        Ride ride = this.getRideById(id);
+        if (ride.getStatus() != RideStatus.ONGOING) {
+            throw new InvalidRideStateException("Ride must be ONGOING before completing.");
         }
-        throw new RideNotFoundException(id);
+        ride.setRideEndTime(LocalDateTime.now());
+        ride.setStatus(RideStatus.COMPLETED);
+        rideRepository.save(ride);
+
+        // Publish RIDE_COMPLETED event to Kafka
+        kafkaTemplate.send("ride-completed", String.valueOf(ride.getId()) + ":" + ride.getDriverId());
+
+        return ride;
     }
 
     public Ride cancelRide(Long id) {
-        Optional<Ride> rideOptional = rideRepository.findById(id);
-        if (rideOptional.isPresent()) {
-            Ride ride = rideOptional.get();
-            ride.setRideCanceledTime(LocalDateTime.now());
-            ride.setStatus("CANCELLED");
-            rideRepository.save(ride);
+        Ride ride = this.getRideById(id);
+        switch (ride.getStatus()) {
+            case REQUESTED, PENDING, ASSIGNED -> {
+                ride.setRideCanceledTime(LocalDateTime.now());
+                ride.setStatus(RideStatus.CANCELLED);
+                rideRepository.save(ride);
 
-            return ride;
+                // Publish RIDE_STARTED event to Kafka
+                kafkaTemplate.send("ride-cancelled", String.valueOf(ride.getId()) + ":" + ride.getDriverId());
+
+                return ride;
+            }
+            default -> { // ONGOING, COMPLETED, CANCELLED
+                throw new InvalidRideStateException("Ride cannot be cancelled: " + ride.getStatus());
+            }
         }
-        throw new RideNotFoundException(id);
     }
 
     public void handleDriverAssignedEvent(DriverAssignedEvent driverAssignedEvent) {
-        Ride ride = rideRepository.findById(driverAssignedEvent.getRideId()).orElseThrow();
+        Ride ride = this.getRideById(driverAssignedEvent.getRideId());
+        if (ride.getStatus() != RideStatus.REQUESTED) {
+            throw new InvalidRideStateException("Ride must be REQUESTED before assigning");
+        }
         ride.setDriverId(driverAssignedEvent.getDriverId());
         ride.setRideAssignedTime(LocalDateTime.now());
-        ride.setStatus("ASSIGNED");
+        ride.setStatus(RideStatus.ASSIGNED);
         rideRepository.save(ride);
     }
 
     public void handleNoDriverAvailableEvent(NoDriverAvailableEvent noDriverAvailableEvent) {
-        Ride ride = rideRepository.findById(noDriverAvailableEvent.getRideId()).orElseThrow();
-        ride.setStatus("PENDING");
+        Ride ride = this.getRideById(noDriverAvailableEvent.getRideId());
+        if (ride.getStatus() != RideStatus.REQUESTED) {
+            throw new InvalidRideStateException("Ride must be REQUESTED before pending");
+        }
+        ride.setStatus(RideStatus.PENDING);
         rideRepository.save(ride);
     }
 

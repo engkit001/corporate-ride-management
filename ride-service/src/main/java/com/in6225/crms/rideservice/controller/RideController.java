@@ -1,6 +1,6 @@
 package com.in6225.crms.rideservice.controller;
 
-import com.in6225.crms.rideservice.model.Ride;
+import com.in6225.crms.rideservice.entity.Ride;
 import com.in6225.crms.rideservice.service.RideService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;

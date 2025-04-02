@@ -1,5 +1,6 @@
-package com.in6225.crms.rideservice.model;
+package com.in6225.crms.rideservice.entity;
 
+import com.in6225.crms.rideservice.enums.RideStatus;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -27,5 +28,5 @@ public class Ride {
     private LocalDateTime rideStartTime;
     private LocalDateTime rideEndTime;
     private LocalDateTime rideCanceledTime;
-    private String status; // REQUESTED, PENDING, ONGOING, COMPLETED, CANCELLED
+    private RideStatus status;
 }

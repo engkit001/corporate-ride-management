@@ -1,6 +1,6 @@
 package com.in6225.crms.rideservice.repository;
 
-import com.in6225.crms.rideservice.model.Ride;
+import com.in6225.crms.rideservice.entity.Ride;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 import java.util.List;

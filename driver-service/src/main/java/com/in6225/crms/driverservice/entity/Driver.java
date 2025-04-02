@@ -1,5 +1,6 @@
-package com.in6225.crms.driverservice.model;
+package com.in6225.crms.driverservice.entity;
 
+import com.in6225.crms.driverservice.enums.DriverStatus;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
@@ -19,5 +20,5 @@ public class Driver {
     private String id; // DRIVER001, DRIVER002
     private String name;
     private String phoneNumber;
-    private String status; // AVAILABLE, ASSIGNED, BUSY, OFFLINE
+    private DriverStatus status;
 }

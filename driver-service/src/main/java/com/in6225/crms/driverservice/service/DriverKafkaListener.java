@@ -1,5 +1,6 @@
 package com.in6225.crms.driverservice.service;
 
+import com.in6225.crms.rideevents.RideCancelledEvent;
 import com.in6225.crms.rideevents.RideCompletedEvent;
 import com.in6225.crms.rideevents.RideRequestedEvent;
 import com.in6225.crms.rideevents.RideStartedEvent;
@@ -33,5 +34,15 @@ public class DriverKafkaListener {
         RideCompletedEvent rideCompletedEvent = new RideCompletedEvent(Long.valueOf(parts[0]),parts[1]);
         driverService.handleRideCompletedEvent(rideCompletedEvent);
     }
+
+    @KafkaListener(topics = "ride-cancelled", groupId = "driver-service-group")
+    public void handleRideCancelledEvent(String message) {
+        String[] parts = message.split(":");
+        if (!parts[1].isEmpty()) {
+            RideCancelledEvent rideCancelledEvent = new RideCancelledEvent(Long.valueOf(parts[0]), parts[1]);
+            driverService.handleRideCancelledEvent(rideCancelledEvent);
+        }
+    }
+
 
 }
