@@ -8,6 +8,7 @@ import com.in6225.crms.rideservice.exception.RideNotFoundException;
 import com.in6225.crms.rideservice.entity.Ride;
 import com.in6225.crms.rideservice.repository.RideRepository;
 import org.springframework.kafka.core.KafkaTemplate;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -25,13 +26,8 @@ public class RideService {
     }
 
     public Ride getRideById(Long id) {
-        Optional<Ride> rideOptional = rideRepository.findById(id);
-
-        if (rideOptional.isEmpty()) {
-            throw new RideNotFoundException(id);
-        }
-
-        return rideOptional.get();
+        return rideRepository.findById(id)
+                .orElseThrow(() -> new RideNotFoundException(id));
     }
 
     public List<Ride> getRidesByUserId(String userId) {
@@ -52,10 +48,20 @@ public class RideService {
         return savedRide;
     }
 
+    @Scheduled(fixedDelay = 60000) // Run every 60 seconds
+    public void processPendingRides() {
+        List<Ride> pendingRides = rideRepository.findAllByStatus(RideStatus.PENDING);
+
+        for (Ride ride : pendingRides) {
+            // Publish RIDE_REQUESTED event to Kafka
+            kafkaTemplate.send("ride-requested", ride.getId().toString());
+        }
+    }
+
     public Ride startRide(Long id) {
         Ride ride = this.getRideById(id);
         if (ride.getStatus() != RideStatus.ASSIGNED) {
-            throw new InvalidRideStateException("Ride must be ASSIGNED before starting.");
+            throw new InvalidRideStateException("Ride must be ASSIGNED before starting");
         }
         ride.setStatus(RideStatus.ONGOING);
         ride.setRideStartTime(LocalDateTime.now());
@@ -70,7 +76,7 @@ public class RideService {
     public Ride completeRide(Long id) {
         Ride ride = this.getRideById(id);
         if (ride.getStatus() != RideStatus.ONGOING) {
-            throw new InvalidRideStateException("Ride must be ONGOING before completing.");
+            throw new InvalidRideStateException("Ride must be ONGOING before completing");
         }
         ride.setRideEndTime(LocalDateTime.now());
         ride.setStatus(RideStatus.COMPLETED);
@@ -103,8 +109,8 @@ public class RideService {
 
     public void handleDriverAssignedEvent(DriverAssignedEvent driverAssignedEvent) {
         Ride ride = this.getRideById(driverAssignedEvent.getRideId());
-        if (ride.getStatus() != RideStatus.REQUESTED) {
-            throw new InvalidRideStateException("Ride must be REQUESTED before assigning");
+        if (ride.getStatus() != RideStatus.REQUESTED && ride.getStatus() != RideStatus.PENDING) {
+            throw new InvalidRideStateException("Ride must be REQUESTED/PENDING before assigning");
         }
         ride.setDriverId(driverAssignedEvent.getDriverId());
         ride.setRideAssignedTime(LocalDateTime.now());
@@ -114,11 +120,15 @@ public class RideService {
 
     public void handleNoDriverAvailableEvent(NoDriverAvailableEvent noDriverAvailableEvent) {
         Ride ride = this.getRideById(noDriverAvailableEvent.getRideId());
+        if (ride.getStatus() == RideStatus.PENDING) {
+            return; // Do nothing if already PENDING
+        }
         if (ride.getStatus() != RideStatus.REQUESTED) {
             throw new InvalidRideStateException("Ride must be REQUESTED before pending");
         }
         ride.setStatus(RideStatus.PENDING);
         rideRepository.save(ride);
+
     }
 
 }
