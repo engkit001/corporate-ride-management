@@ -27,13 +27,8 @@ public class DriverService {
 
     // Get driver by id
     public Driver getDriverById(String id) {
-        Optional<Driver> driverOptional = driverRepository.findById(id);
-
-        if (driverOptional.isEmpty()) {
-            throw new DriverNotFoundException(id);
-        }
-
-        return driverOptional.get();
+        return driverRepository.findById(id)
+                .orElseThrow(() -> new DriverNotFoundException(id));
     }
 
     // Get drivers by status
