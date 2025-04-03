@@ -3,6 +3,7 @@ package com.in6225.crms.rideservice.controller;
 import com.in6225.crms.rideservice.dto.RideRequest;
 import com.in6225.crms.rideservice.entity.Ride;
 import com.in6225.crms.rideservice.service.RideService;
+import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -29,7 +30,7 @@ public class RideController {
     }
 
     @PostMapping("/request")
-    public ResponseEntity<Ride> requestRide(@RequestBody RideRequest rideRequest) {
+    public ResponseEntity<Ride> requestRide(@Valid @RequestBody RideRequest rideRequest) {
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(rideService.requestRide(rideRequest));
     }

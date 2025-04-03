@@ -1,9 +1,10 @@
 package com.in6225.crms.driverservice.service;
 
 import com.in6225.crms.driverservice.dto.DriverRegistrationRequest;
-import com.in6225.crms.driverservice.enums.DriverStatus;
-import com.in6225.crms.driverservice.exception.DriverNotFoundException;
 import com.in6225.crms.driverservice.entity.Driver;
+import com.in6225.crms.driverservice.enums.DriverStatus;
+import com.in6225.crms.driverservice.exception.DriverAlreadyExistsException;
+import com.in6225.crms.driverservice.exception.DriverNotFoundException;
 import com.in6225.crms.driverservice.exception.InvalidDriverStateException;
 import com.in6225.crms.driverservice.repository.DriverRepository;
 import com.in6225.crms.rideevents.RideCancelledEvent;
@@ -43,6 +44,9 @@ public class DriverService {
 
     // Register a new driver
     public Driver registerDriver(DriverRegistrationRequest driverRegistrationRequest) {
+        if (driverRepository.existsById(driverRegistrationRequest.getId())) {
+            throw new DriverAlreadyExistsException("Driver with ID " + driverRegistrationRequest.getId() + " already exists");
+        }
         Driver driver = new Driver();
         driver.setId(driverRegistrationRequest.getId());
         driver.setName(driverRegistrationRequest.getName());
