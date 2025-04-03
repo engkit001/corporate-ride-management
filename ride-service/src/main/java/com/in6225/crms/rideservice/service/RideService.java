@@ -2,7 +2,7 @@ package com.in6225.crms.rideservice.service;
 
 import com.in6225.crms.rideevents.DriverAssignedEvent;
 import com.in6225.crms.rideevents.NoDriverAvailableEvent;
-import com.in6225.crms.rideservice.dto.RideRequestDTO;
+import com.in6225.crms.rideservice.dto.RideRequest;
 import com.in6225.crms.rideservice.enums.RideStatus;
 import com.in6225.crms.rideservice.exception.InvalidRideStateException;
 import com.in6225.crms.rideservice.exception.RideNotFoundException;
@@ -14,7 +14,6 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Optional;
 
 @Service
 public class RideService {
@@ -38,11 +37,11 @@ public class RideService {
         return rideRepository.findByUserId(userId);
     }
 
-    public Ride requestRide(RideRequestDTO rideRequestDTO) {
+    public Ride requestRide(RideRequest rideRequest) {
         Ride ride = new Ride();
-        ride.setUserId(rideRequestDTO.getUserId());
-        ride.setPickupLocation(rideRequestDTO.getPickupLocation());
-        ride.setDropoffLocation(rideRequestDTO.getDropoffLocation());
+        ride.setUserId(rideRequest.getUserId());
+        ride.setPickupLocation(rideRequest.getPickupLocation());
+        ride.setDropoffLocation(rideRequest.getDropoffLocation());
         ride.setRideRequestedTime(LocalDateTime.now());
         ride.setStatus(RideStatus.REQUESTED);
         Ride savedRide = rideRepository.save(ride);

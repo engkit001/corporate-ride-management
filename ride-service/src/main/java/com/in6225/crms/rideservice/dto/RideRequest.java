@@ -9,7 +9,7 @@ import lombok.Setter;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class RideRequestDTO {
+public class RideRequest {
     private String userId;
     private String pickupLocation;
     private String dropoffLocation;
