@@ -1,5 +1,6 @@
 package com.in6225.crms.rideservice.controller;
 
+import com.in6225.crms.rideservice.dto.RideRequestDTO;
 import com.in6225.crms.rideservice.entity.Ride;
 import com.in6225.crms.rideservice.service.RideService;
 import org.springframework.http.HttpStatus;
@@ -28,9 +29,9 @@ public class RideController {
     }
 
     @PostMapping("/request")
-    public ResponseEntity<Ride> requestRide(@RequestBody Ride ride) {
+    public ResponseEntity<Ride> requestRide(@RequestBody RideRequestDTO rideRequestDTO) {
         return ResponseEntity.status(HttpStatus.CREATED)
-                .body(rideService.requestRide(ride));
+                .body(rideService.requestRide(rideRequestDTO));
     }
 
     @PatchMapping("/{id}/start")

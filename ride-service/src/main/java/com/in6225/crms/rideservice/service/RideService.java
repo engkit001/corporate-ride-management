@@ -2,6 +2,7 @@ package com.in6225.crms.rideservice.service;
 
 import com.in6225.crms.rideevents.DriverAssignedEvent;
 import com.in6225.crms.rideevents.NoDriverAvailableEvent;
+import com.in6225.crms.rideservice.dto.RideRequestDTO;
 import com.in6225.crms.rideservice.enums.RideStatus;
 import com.in6225.crms.rideservice.exception.InvalidRideStateException;
 import com.in6225.crms.rideservice.exception.RideNotFoundException;
@@ -37,9 +38,13 @@ public class RideService {
         return rideRepository.findByUserId(userId);
     }
 
-    public Ride requestRide(Ride ride) {
-        ride.setStatus(RideStatus.REQUESTED);
+    public Ride requestRide(RideRequestDTO rideRequestDTO) {
+        Ride ride = new Ride();
+        ride.setUserId(rideRequestDTO.getUserId());
+        ride.setPickupLocation(rideRequestDTO.getPickupLocation());
+        ride.setDropoffLocation(rideRequestDTO.getDropoffLocation());
         ride.setRideRequestedTime(LocalDateTime.now());
+        ride.setStatus(RideStatus.REQUESTED);
         Ride savedRide = rideRepository.save(ride);
 
         // Publish RIDE_REQUESTED event to Kafka
@@ -91,7 +96,7 @@ public class RideService {
     public Ride cancelRide(Long id) {
         Ride ride = this.getRideById(id);
         switch (ride.getStatus()) {
-            case REQUESTED, PENDING, ASSIGNED -> {
+            case PENDING, ASSIGNED -> {
                 ride.setRideCanceledTime(LocalDateTime.now());
                 ride.setStatus(RideStatus.CANCELLED);
                 rideRepository.save(ride);
@@ -101,7 +106,7 @@ public class RideService {
 
                 return ride;
             }
-            default -> { // ONGOING, COMPLETED, CANCELLED
+            default -> { // REQUESTED, ONGOING, COMPLETED, CANCELLED
                 throw new InvalidRideStateException("Ride cannot be cancelled: " + ride.getStatus());
             }
         }
