@@ -1,7 +1,7 @@
 package com.in6225.crms.driverservice.controller;
 
+import com.in6225.crms.driverservice.dto.DriverRegistrationRequest;
 import com.in6225.crms.driverservice.entity.Driver;
-import com.in6225.crms.driverservice.enums.DriverStatus;
 import com.in6225.crms.driverservice.service.DriverService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -34,8 +34,8 @@ public class DriverController {
 
     // Add new driver to the system with default AVAILABLE status
     @PostMapping("/register")
-    public ResponseEntity<Driver> registerDriver(@RequestBody Driver driver) {
-        Driver savedDriver = driverService.registerDriver(driver);
+    public ResponseEntity<Driver> registerDriver(@RequestBody DriverRegistrationRequest driverRegistrationRequest) {
+        Driver savedDriver = driverService.registerDriver(driverRegistrationRequest);
         return ResponseEntity.status(HttpStatus.CREATED).body(savedDriver);
     }
 

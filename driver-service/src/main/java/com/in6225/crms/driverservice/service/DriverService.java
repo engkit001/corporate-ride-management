@@ -1,5 +1,6 @@
 package com.in6225.crms.driverservice.service;
 
+import com.in6225.crms.driverservice.dto.DriverRegistrationRequest;
 import com.in6225.crms.driverservice.enums.DriverStatus;
 import com.in6225.crms.driverservice.exception.DriverNotFoundException;
 import com.in6225.crms.driverservice.entity.Driver;
@@ -41,7 +42,11 @@ public class DriverService {
     }
 
     // Register a new driver
-    public Driver registerDriver(Driver driver) {
+    public Driver registerDriver(DriverRegistrationRequest driverRegistrationRequest) {
+        Driver driver = new Driver();
+        driver.setId(driverRegistrationRequest.getId());
+        driver.setName(driverRegistrationRequest.getName());
+        driver.setPhoneNumber(driverRegistrationRequest.getPhoneNumber());
         driver.setStatus(DriverStatus.AVAILABLE);
         return driverRepository.save(driver);
     }
