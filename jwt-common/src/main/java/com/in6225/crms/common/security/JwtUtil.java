@@ -1,23 +1,23 @@
-package com.in6225.crms.userservice.security;
+package com.in6225.crms.common.security;
 
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Component;
 
 import java.nio.charset.StandardCharsets;
 import java.security.Key;
 import java.util.Date;
 
-@Component
 public class JwtUtil {
-    @Value("${jwt.secret}")
-    private String secretKey;
 
-    @Value("${jwt.expiration}")
-    private long expirationTime;
+    private final String secretKey;
+    private final long expirationTime;
+
+    public JwtUtil(String secretKey, long expirationTime) {
+        this.secretKey = secretKey;
+        this.expirationTime = expirationTime;
+    }
 
     private Key getSigningKey() {
         return Keys.hmacShaKeyFor(secretKey.getBytes(StandardCharsets.UTF_8));
@@ -34,8 +34,9 @@ public class JwtUtil {
     }
 
     public Claims extractClaims(String token) {
-        return Jwts.parser()
-                .setSigningKey(secretKey)
+        return Jwts.parserBuilder()
+                .setSigningKey(getSigningKey())
+                .build()
                 .parseClaimsJws(token)
                 .getBody();
     }
@@ -49,6 +50,11 @@ public class JwtUtil {
     }
 
     public boolean isTokenValid(String token, String username) {
-        return username.equals(extractUsername(token)) && extractClaims(token).getExpiration().after(new Date());
+        try {
+            return username.equals(extractUsername(token)) &&
+                    extractClaims(token).getExpiration().after(new Date());
+        } catch (Exception e) {
+            return false;
+        }
     }
 }

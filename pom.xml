@@ -23,6 +23,7 @@
 	</developers>
     <modules>
         <module>ride-events</module>
+        <module>jwt-common</module>
     </modules>
     <scm>
 		<connection/>

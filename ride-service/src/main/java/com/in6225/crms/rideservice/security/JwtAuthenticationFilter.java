@@ -1,8 +1,7 @@
 package com.in6225.crms.rideservice.security;
 
+import com.in6225.crms.common.security.JwtUtil;
 import io.jsonwebtoken.Claims;
-import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.security.Keys;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -17,23 +16,18 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
-import java.security.Key;
 import java.util.List;
 
 @Component
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
-    @Value("${jwt.secret}")
-    private String jwtSecret;
-
+    private final JwtUtil jwtUtil;
     private final AuthenticationManager authenticationManager;
 
-    public JwtAuthenticationFilter(@Lazy AuthenticationManager authenticationManager) {
+    public JwtAuthenticationFilter(@Lazy AuthenticationManager authenticationManager,
+                                   JwtUtil jwtUtil) {
         this.authenticationManager = authenticationManager;
-    }
-
-    private Key getSigningKey() {
-        return Keys.hmacShaKeyFor(jwtSecret.getBytes());
+        this.jwtUtil = jwtUtil;
     }
 
     @Override
@@ -44,15 +38,18 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         String token = getTokenFromRequest(request);
 
-        if (token != null && isValidToken(token)) {
-            Claims claims = extractClaims(token);
-            String username = claims.getSubject();
+        if (token != null) {
+            String username = jwtUtil.extractUsername(token);
+            if (username != null && jwtUtil.isTokenValid(token, username)) {
+                Claims claims = jwtUtil.extractClaims(token);
+                String role = claims.get("role", String.class); // Use role from token if needed
 
-            if (username != null) {
-                // Create the Authentication object
-                UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
-                        username, null, List.of(() -> "ROLE_USER") // You can add role claims if necessary
-                );
+                UsernamePasswordAuthenticationToken authentication =
+                        new UsernamePasswordAuthenticationToken(
+                                username,
+                                null,
+                                List.of(() -> "ROLE_" + role.toUpperCase()) // Example: ROLE_DRIVER or ROLE_PASSENGER
+                        );
                 authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
                 SecurityContextHolder.getContext().setAuthentication(authentication);
             }
@@ -69,20 +66,4 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         return null;
     }
 
-    private boolean isValidToken(String token) {
-        try {
-            Jwts.parserBuilder()
-                    .setSigningKey(getSigningKey())
-                    .build()
-                    .parseClaimsJws(token);
-            return true;
-        } catch (Exception e) {
-            return false; // Invalid or expired token
-        }
-    }
-
-    private Claims extractClaims(String token) {
-        return Jwts.parserBuilder().setSigningKey(getSigningKey()).build()
-                .parseClaimsJws(token).getBody();
-    }
 }
