@@ -11,6 +11,6 @@ import lombok.Setter;
 @NoArgsConstructor
 @AllArgsConstructor
 public class AuthRequest {
-    private String username;
+    private String id;
     private String password;
 }
