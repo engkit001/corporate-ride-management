@@ -12,7 +12,7 @@ import lombok.Setter;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class RideRequest {
+public class RideRequestDto {
     @NotBlank(message = "User ID is required")
     @Pattern(regexp = "EMP\\d{3}", message = "User ID must start with 'EMP' followed by three digits (e.g., EMP123)")
     private String userId;

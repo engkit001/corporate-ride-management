@@ -2,46 +2,82 @@ package com.in6225.crms.rideservice.service;
 
 import com.in6225.crms.rideevents.DriverAssignedEvent;
 import com.in6225.crms.rideevents.NoDriverAvailableEvent;
-import com.in6225.crms.rideservice.dto.RideRequest;
+import com.in6225.crms.rideservice.dto.RideDto;
+import com.in6225.crms.rideservice.dto.RideRequestDto;
 import com.in6225.crms.rideservice.enums.RideStatus;
 import com.in6225.crms.rideservice.exception.InvalidRideStateException;
 import com.in6225.crms.rideservice.exception.RideNotFoundException;
 import com.in6225.crms.rideservice.entity.Ride;
 import com.in6225.crms.rideservice.repository.RideRepository;
+import lombok.AllArgsConstructor;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
 @Service
+@AllArgsConstructor
 public class RideService {
     private final RideRepository rideRepository;
     private final KafkaTemplate<Object, String> kafkaTemplate;
 
-    public RideService(RideRepository rideRepository, KafkaTemplate<Object, String> kafkaTemplate) {
-        this.rideRepository = rideRepository;
-        this.kafkaTemplate = kafkaTemplate;
+    public RideDto getRideById(Long id) {
+        Ride ride = rideRepository.findById(id)
+                .orElseThrow(() -> new RideNotFoundException(String.valueOf(id)));
+        return new RideDto(
+                ride.getId(),
+                ride.getUserId(),
+                ride.getDriverId(),
+                ride.getPickupLocation(),
+                ride.getDropoffLocation(),
+                ride.getRideRequestedTime(),
+                ride.getRideAssignedTime(),
+                ride.getRideStartTime(),
+                ride.getRideEndTime(),
+                ride.getRideCanceledTime(),
+                ride.getStatus()
+        );
     }
 
-    public Ride getRideById(Long id) {
-        return rideRepository.findById(id)
-                .orElseThrow(() -> new RideNotFoundException(id));
-    }
+    public List<RideDto> getRidesByUserId(String userId) {
+        List<Ride> rideList;
 
-    public List<Ride> getRidesByUserId(String userId) {
+        // Get all drivers if no status is provided
         if (userId == null || userId.isEmpty()) {
-            return rideRepository.findAll(); // Return all drivers if no status is provided
+            rideList = rideRepository.findAll();
         }
-        return rideRepository.findByUserId(userId);
+        else {
+            rideList = rideRepository.findByUserId(userId);
+        }
+
+        List<RideDto> rideDtoList = new ArrayList<>();
+        for (Ride ride : rideList) {
+            RideDto rideDto = new RideDto(
+                    ride.getId(),
+                    ride.getUserId(),
+                    ride.getDriverId(),
+                    ride.getPickupLocation(),
+                    ride.getDropoffLocation(),
+                    ride.getRideRequestedTime(),
+                    ride.getRideAssignedTime(),
+                    ride.getRideStartTime(),
+                    ride.getRideEndTime(),
+                    ride.getRideCanceledTime(),
+                    ride.getStatus()
+            );
+            rideDtoList.add(rideDto);
+        }
+        return rideDtoList;
     }
 
-    public Ride requestRide(RideRequest rideRequest) {
+    public RideDto requestRide(RideRequestDto rideRequestDto) {
         Ride ride = new Ride();
-        ride.setUserId(rideRequest.getUserId());
-        ride.setPickupLocation(rideRequest.getPickupLocation());
-        ride.setDropoffLocation(rideRequest.getDropoffLocation());
+        ride.setUserId(rideRequestDto.getUserId());
+        ride.setPickupLocation(rideRequestDto.getPickupLocation());
+        ride.setDropoffLocation(rideRequestDto.getDropoffLocation());
         ride.setRideRequestedTime(LocalDateTime.now());
         ride.setStatus(RideStatus.REQUESTED);
         Ride savedRide = rideRepository.save(ride);
@@ -49,7 +85,19 @@ public class RideService {
         // Publish RIDE_REQUESTED event to Kafka
         kafkaTemplate.send("ride-requested", savedRide.getId().toString());
 
-        return savedRide;
+        return new RideDto(
+                savedRide.getId(),
+                savedRide.getUserId(),
+                savedRide.getDriverId(),
+                savedRide.getPickupLocation(),
+                savedRide.getDropoffLocation(),
+                savedRide.getRideRequestedTime(),
+                savedRide.getRideAssignedTime(),
+                savedRide.getRideStartTime(),
+                savedRide.getRideEndTime(),
+                savedRide.getRideCanceledTime(),
+                savedRide.getStatus()
+        );
     }
 
     @Scheduled(fixedDelay = 60000) // Run every 60 seconds
@@ -62,57 +110,98 @@ public class RideService {
         }
     }
 
-    public Ride startRide(Long id) {
-        Ride ride = this.getRideById(id);
+    public RideDto startRide(Long id) {
+        Ride ride = rideRepository.findById(id)
+                .orElseThrow(() -> new RideNotFoundException(String.valueOf(id)));
         if (ride.getStatus() != RideStatus.ASSIGNED) {
             throw new InvalidRideStateException("Ride must be ASSIGNED before starting");
         }
         ride.setStatus(RideStatus.ONGOING);
         ride.setRideStartTime(LocalDateTime.now());
-        rideRepository.save(ride);
+        Ride savedRide = rideRepository.save(ride);
 
         // Publish RIDE_STARTED event to Kafka
-        kafkaTemplate.send("ride-started", String.valueOf(ride.getId()) + ":" + ride.getDriverId());
+        kafkaTemplate.send("ride-started", ride.getId() + ":" + ride.getDriverId());
 
-        return ride;
+        return new RideDto(
+                savedRide.getId(),
+                savedRide.getUserId(),
+                savedRide.getDriverId(),
+                savedRide.getPickupLocation(),
+                savedRide.getDropoffLocation(),
+                savedRide.getRideRequestedTime(),
+                savedRide.getRideAssignedTime(),
+                savedRide.getRideStartTime(),
+                savedRide.getRideEndTime(),
+                savedRide.getRideCanceledTime(),
+                savedRide.getStatus()
+        );
     }
 
-    public Ride completeRide(Long id) {
-        Ride ride = this.getRideById(id);
+    public RideDto completeRide(Long id) {
+        Ride ride = rideRepository.findById(id)
+                .orElseThrow(() -> new RideNotFoundException(String.valueOf(id)));
         if (ride.getStatus() != RideStatus.ONGOING) {
             throw new InvalidRideStateException("Ride must be ONGOING before completing");
         }
         ride.setRideEndTime(LocalDateTime.now());
         ride.setStatus(RideStatus.COMPLETED);
-        rideRepository.save(ride);
+        Ride savedRide = rideRepository.save(ride);
 
         // Publish RIDE_COMPLETED event to Kafka
-        kafkaTemplate.send("ride-completed", String.valueOf(ride.getId()) + ":" + ride.getDriverId());
+        kafkaTemplate.send("ride-completed", ride.getId() + ":" + ride.getDriverId());
 
-        return ride;
+        return new RideDto(
+                savedRide.getId(),
+                savedRide.getUserId(),
+                savedRide.getDriverId(),
+                savedRide.getPickupLocation(),
+                savedRide.getDropoffLocation(),
+                savedRide.getRideRequestedTime(),
+                savedRide.getRideAssignedTime(),
+                savedRide.getRideStartTime(),
+                savedRide.getRideEndTime(),
+                savedRide.getRideCanceledTime(),
+                savedRide.getStatus()
+        );
     }
 
-    public Ride cancelRide(Long id) {
-        Ride ride = this.getRideById(id);
+    public RideDto cancelRide(Long id) {
+        Ride ride = rideRepository.findById(id)
+                .orElseThrow(() -> new RideNotFoundException(String.valueOf(id)));
         switch (ride.getStatus()) {
             case PENDING, ASSIGNED -> {
                 ride.setRideCanceledTime(LocalDateTime.now());
                 ride.setStatus(RideStatus.CANCELLED);
-                rideRepository.save(ride);
+                Ride savedRide = rideRepository.save(ride);
 
                 // Publish RIDE_STARTED event to Kafka
-                kafkaTemplate.send("ride-cancelled", String.valueOf(ride.getId()) + ":" + ride.getDriverId());
+                kafkaTemplate.send("ride-cancelled", ride.getId() + ":" + ride.getDriverId());
 
-                return ride;
+                return new RideDto(
+                        savedRide.getId(),
+                        savedRide.getUserId(),
+                        savedRide.getDriverId(),
+                        savedRide.getPickupLocation(),
+                        savedRide.getDropoffLocation(),
+                        savedRide.getRideRequestedTime(),
+                        savedRide.getRideAssignedTime(),
+                        savedRide.getRideStartTime(),
+                        savedRide.getRideEndTime(),
+                        savedRide.getRideCanceledTime(),
+                        savedRide.getStatus()
+                );
             }
-            default -> { // REQUESTED, ONGOING, COMPLETED, CANCELLED
+            // REQUESTED, ONGOING, COMPLETED, CANCELLED
+            default ->
                 throw new InvalidRideStateException("Ride cannot be cancelled: " + ride.getStatus());
-            }
         }
     }
 
     public void handleDriverAssignedEvent(DriverAssignedEvent driverAssignedEvent) {
-        Ride ride = this.getRideById(driverAssignedEvent.getRideId());
+        Long rideId = driverAssignedEvent.getRideId();
+        Ride ride = rideRepository.findById(rideId)
+                .orElseThrow(() -> new RideNotFoundException(String.valueOf(rideId)));
         if (ride.getStatus() != RideStatus.REQUESTED && ride.getStatus() != RideStatus.PENDING) {
             throw new InvalidRideStateException("Ride must be REQUESTED/PENDING before assigning");
         }
@@ -123,7 +212,9 @@ public class RideService {
     }
 
     public void handleNoDriverAvailableEvent(NoDriverAvailableEvent noDriverAvailableEvent) {
-        Ride ride = this.getRideById(noDriverAvailableEvent.getRideId());
+        Long rideId = noDriverAvailableEvent.getRideId();
+        Ride ride = rideRepository.findById(rideId)
+                .orElseThrow(() -> new RideNotFoundException(String.valueOf(rideId)));
         if (ride.getStatus() == RideStatus.PENDING) {
             return; // Do nothing if already PENDING
         }
@@ -132,8 +223,6 @@ public class RideService {
         }
         ride.setStatus(RideStatus.PENDING);
         rideRepository.save(ride);
-
     }
-
 }
 

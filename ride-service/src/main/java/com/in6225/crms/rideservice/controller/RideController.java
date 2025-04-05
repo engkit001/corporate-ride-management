@@ -1,9 +1,10 @@
 package com.in6225.crms.rideservice.controller;
 
-import com.in6225.crms.rideservice.dto.RideRequest;
-import com.in6225.crms.rideservice.entity.Ride;
+import com.in6225.crms.rideservice.dto.RideDto;
+import com.in6225.crms.rideservice.dto.RideRequestDto;
 import com.in6225.crms.rideservice.service.RideService;
 import jakarta.validation.Valid;
+import lombok.AllArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -12,42 +13,38 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/rides")
+@AllArgsConstructor
 public class RideController {
     private final RideService rideService;
 
-    public RideController(RideService rideService) {
-        this.rideService = rideService;
-    }
-
-    @GetMapping("/{id}")
-    public ResponseEntity<Ride> getRideById(@PathVariable Long id) {
-        return ResponseEntity.ok(rideService.getRideById(id));
+    @GetMapping("{id}")
+    public ResponseEntity<RideDto> getRideById(@PathVariable Long id) {
+        return new ResponseEntity<>(rideService.getRideById(id), HttpStatus.OK);
     }
 
     @GetMapping
-    public ResponseEntity<List<Ride>> getRidesByUserId(@RequestParam(required = false) String userId) {
-        return ResponseEntity.ok(rideService.getRidesByUserId(userId));
+    public ResponseEntity<List<RideDto>> getRidesByUserId(@RequestParam(required = false) String userId) {
+        return new ResponseEntity<>(rideService.getRidesByUserId(userId), HttpStatus.OK);
     }
 
-    @PostMapping("/request")
-    public ResponseEntity<Ride> requestRide(@Valid @RequestBody RideRequest rideRequest) {
-        return ResponseEntity.status(HttpStatus.CREATED)
-                .body(rideService.requestRide(rideRequest));
+    @PostMapping("request")
+    public ResponseEntity<RideDto> requestRide(@Valid @RequestBody RideRequestDto rideRequestDto) {
+        return new ResponseEntity<>(rideService.requestRide(rideRequestDto), HttpStatus.CREATED);
     }
 
-    @PatchMapping("/{id}/start")
-    public ResponseEntity<Ride> startRide(@PathVariable Long id) {
-        return ResponseEntity.ok(rideService.startRide(id));
+    @PatchMapping("{id}/start")
+    public ResponseEntity<RideDto> startRide(@PathVariable Long id) {
+        return new ResponseEntity<>(rideService.startRide(id), HttpStatus.OK);
     }
 
-    @PatchMapping("/{id}/complete")
-    public ResponseEntity<Ride> completeRide(@PathVariable Long id) {
-        return ResponseEntity.ok(rideService.completeRide(id));
+    @PatchMapping("{id}/complete")
+    public ResponseEntity<RideDto> completeRide(@PathVariable Long id) {
+        return new ResponseEntity<>(rideService.completeRide(id), HttpStatus.OK);
     }
 
-    @PatchMapping("/{id}/cancel")
-    public ResponseEntity<Ride> cancelRide(@PathVariable Long id) {
-        return ResponseEntity.ok(rideService.cancelRide(id));
+    @PatchMapping("{id}/cancel")
+    public ResponseEntity<RideDto> cancelRide(@PathVariable Long id) {
+        return new ResponseEntity<>(rideService.cancelRide(id), HttpStatus.OK);
     }
 }
 

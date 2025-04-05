@@ -1,7 +1,6 @@
 package com.in6225.crms.driverservice.controller;
 
 import com.in6225.crms.driverservice.dto.DriverDto;
-import com.in6225.crms.driverservice.entity.Driver;
 import com.in6225.crms.driverservice.service.DriverService;
 import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
