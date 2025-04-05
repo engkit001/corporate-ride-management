@@ -15,8 +15,8 @@ import lombok.Setter;
 @AllArgsConstructor
 public class Driver {
     @Id
-    @Column(unique = true)  // Ensures 'id' is unique in the database
-    private String id; // DRIVER001, DRIVER002
+    @Column(unique = true)
+    private String id;
     private String name;
     private String phoneNumber;
 

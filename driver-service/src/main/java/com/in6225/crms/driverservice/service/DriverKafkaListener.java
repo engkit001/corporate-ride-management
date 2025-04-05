@@ -4,16 +4,14 @@ import com.in6225.crms.rideevents.RideCancelledEvent;
 import com.in6225.crms.rideevents.RideCompletedEvent;
 import com.in6225.crms.rideevents.RideRequestedEvent;
 import com.in6225.crms.rideevents.RideStartedEvent;
+import lombok.AllArgsConstructor;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Service;
 
 @Service
+@AllArgsConstructor
 public class DriverKafkaListener {
     private final DriverService driverService;
-
-    public DriverKafkaListener(DriverService driverService) {
-        this.driverService = driverService;
-    }
 
     @KafkaListener(topics = "ride-requested", groupId = "driver-service-group")
     public void handleRideRequestedEvent(String message) {

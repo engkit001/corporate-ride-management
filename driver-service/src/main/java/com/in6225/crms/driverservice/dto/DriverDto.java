@@ -1,5 +1,7 @@
 package com.in6225.crms.driverservice.dto;
 
+import com.in6225.crms.driverservice.enums.DriverStatus;
+import jakarta.annotation.Nullable;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
@@ -12,7 +14,7 @@ import lombok.Setter;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class DriverRegistrationRequest {
+public class DriverDto {
     @NotBlank(message = "Driver ID is required")
     @Pattern(regexp = "DRIVER\\d{3}", message = "Driver ID must start with 'DRIVER' followed by three digits (e.g., DRIVER001)")
     private String id; // DRIVER001, DRIVER002
@@ -24,5 +26,7 @@ public class DriverRegistrationRequest {
     @NotBlank(message = "Phone number is required")
     @Pattern(regexp = "^[0-9]{8}$", message = "Phone number must be exactly 8 digits")
     private String phoneNumber;
+
+    private DriverStatus status;
 }
 

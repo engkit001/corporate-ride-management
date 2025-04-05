@@ -9,6 +9,5 @@ import java.util.Optional;
 
 public interface DriverRepository extends JpaRepository<Driver, String> {
     Optional<Driver> findFirstByStatus(DriverStatus status);
-
     List<Driver> findAllByStatus(DriverStatus status);
 }

@@ -1,6 +1,6 @@
 package com.in6225.crms.driverservice.service;
 
-import com.in6225.crms.driverservice.dto.DriverRegistrationRequest;
+import com.in6225.crms.driverservice.dto.DriverDto;
 import com.in6225.crms.driverservice.entity.Driver;
 import com.in6225.crms.driverservice.enums.DriverStatus;
 import com.in6225.crms.driverservice.exception.DriverAlreadyExistsException;
@@ -11,48 +11,76 @@ import com.in6225.crms.rideevents.RideCancelledEvent;
 import com.in6225.crms.rideevents.RideCompletedEvent;
 import com.in6225.crms.rideevents.RideRequestedEvent;
 import com.in6225.crms.rideevents.RideStartedEvent;
+import lombok.AllArgsConstructor;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 @Service
+@AllArgsConstructor
 public class DriverService {
     private final DriverRepository driverRepository;
     private final KafkaTemplate<String, String> kafkaTemplate;
 
-    public DriverService(DriverRepository driverRepository, KafkaTemplate<String, String> kafkaTemplate) {
-        this.driverRepository = driverRepository;
-        this.kafkaTemplate = kafkaTemplate;
-    }
-
-    // Get driver by id
-    public Driver getDriverById(String id) {
-        return driverRepository.findById(id)
+    public DriverDto getDriverById(String id) {
+        Driver driver = driverRepository.findById(id)
                 .orElseThrow(() -> new DriverNotFoundException(id));
+        return new DriverDto(
+                driver.getId(),
+                driver.getName(),
+                driver.getPhoneNumber(),
+                driver.getStatus()
+        );
     }
 
-    // Get drivers by status
-    public List<Driver> getDriversByStatus(String status) {
+    public List<DriverDto> getDriversByStatus(String status) {
+        List<Driver> driverList;
+
+        // Get all drivers if no status is provided
         if (status == null || status.isEmpty()) {
-            return driverRepository.findAll(); // Return all drivers if no status is provided
+            driverList = driverRepository.findAll();
         }
-        DriverStatus driverStatus = DriverStatus.valueOf(status);
-        return driverRepository.findAllByStatus(driverStatus);
+        else {
+            driverList = driverRepository.findAllByStatus(DriverStatus.valueOf(status));
+        }
+
+        List<DriverDto> driverDtoList = new ArrayList<>();
+        for (Driver driver : driverList) {
+            DriverDto driverDto = new DriverDto(
+                    driver.getId(),
+                    driver.getName(),
+                    driver.getPhoneNumber(),
+                    driver.getStatus()
+            );
+            driverDtoList.add(driverDto);
+        }
+        return driverDtoList;
     }
 
-    // Register a new driver
-    public Driver registerDriver(DriverRegistrationRequest driverRegistrationRequest) {
-        if (driverRepository.existsById(driverRegistrationRequest.getId())) {
-            throw new DriverAlreadyExistsException("Driver with ID " + driverRegistrationRequest.getId() + " already exists");
+    public DriverDto registerDriver(DriverDto driverDto) {
+        String driverId = driverDto.getId();
+        if (driverRepository.existsById(driverId)) {
+            throw new DriverAlreadyExistsException(driverId);
         }
-        Driver driver = new Driver();
-        driver.setId(driverRegistrationRequest.getId());
-        driver.setName(driverRegistrationRequest.getName());
-        driver.setPhoneNumber(driverRegistrationRequest.getPhoneNumber());
-        driver.setStatus(DriverStatus.AVAILABLE);
-        return driverRepository.save(driver);
+
+        Driver driver = new Driver(
+            driverId,
+            driverDto.getName(),
+            driverDto.getPhoneNumber(),
+            DriverStatus.AVAILABLE
+        );
+        Driver savedDriver = driverRepository.save(driver);
+
+        return new DriverDto(
+                savedDriver.getId(),
+                savedDriver.getName(),
+                savedDriver.getPhoneNumber(),
+                savedDriver.getStatus()
+        );
     }
 
     public void handleRideRequestedEvent(RideRequestedEvent rideRequestedEvent) {
@@ -72,30 +100,41 @@ public class DriverService {
     }
 
     public void handleRideStartedEvent(RideStartedEvent rideStartedEvent) {
-        Driver driver = this.getDriverById(rideStartedEvent.getDriverId());
+        String driverId = rideStartedEvent.getDriverId();
+        Driver driver = driverRepository.findById(driverId)
+                .orElseThrow(() -> new DriverNotFoundException(driverId));
+
         if (driver.getStatus() != DriverStatus.ASSIGNED) {
             throw new InvalidDriverStateException("Driver is not ASSIGNED");
         }
+
         driver.setStatus(DriverStatus.BUSY);
         driverRepository.save(driver);
     }
 
     public void handleRideCompletedEvent(RideCompletedEvent rideCompletedEvent) {
-        Driver driver = this.getDriverById(rideCompletedEvent.getDriverId());
+        String driverId = rideCompletedEvent.getDriverId();
+        Driver driver = driverRepository.findById(driverId)
+                .orElseThrow(() -> new DriverNotFoundException(driverId));
+
         if (driver.getStatus() != DriverStatus.BUSY) {
             throw new InvalidDriverStateException("Driver is not BUSY");
         }
+
         driver.setStatus(DriverStatus.AVAILABLE);
         driverRepository.save(driver);
     }
 
     public void handleRideCancelledEvent(RideCancelledEvent rideCancelledEvent) {
-        Driver driver = this.getDriverById(rideCancelledEvent.getDriverId());
+        String driverId = rideCancelledEvent.getDriverId();
+        Driver driver = driverRepository.findById(driverId)
+                .orElseThrow(() -> new DriverNotFoundException(driverId));
+
         if (driver.getStatus() != DriverStatus.ASSIGNED) {
             throw new InvalidDriverStateException("Driver is not ASSIGNED");
         }
+
         driver.setStatus(DriverStatus.AVAILABLE);
         driverRepository.save(driver);
     }
-
 }
