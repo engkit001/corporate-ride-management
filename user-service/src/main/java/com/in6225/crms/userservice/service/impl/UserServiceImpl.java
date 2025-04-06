@@ -10,6 +10,9 @@ import lombok.AllArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
+import java.util.List;
+
 @Service
 @AllArgsConstructor
 public class UserServiceImpl implements UserService {
@@ -22,15 +25,29 @@ public class UserServiceImpl implements UserService {
         user.setPassword(passwordEncoder.encode(userDto.getPassword()));
         user.setRole(Role.valueOf(userDto.getRole()));
         User savedUser = userRepository.save(user);
-        return new UserDto(
-                savedUser.getUsername(),
-                savedUser.getPassword(), // TODO: Use another dto to omit this
-                String.valueOf(savedUser.getRole())
-        );
+        return mapToDto(savedUser);
     }
 
-    public User findById(String username) {
-        return userRepository.findByUsername(username)
+    public UserDto getByUsername(String username) {
+        User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new UserNotFoundException(username));
+        return mapToDto(user);
+    }
+
+    public List<UserDto> getAll() {
+        List<User> userList = userRepository.findAll();
+        List<UserDto> userDtoList = new ArrayList<>();
+        for (User user : userList) {
+            userDtoList.add(mapToDto(user));
+        }
+        return userDtoList;
+    }
+
+    private UserDto mapToDto(User user) {
+        return new UserDto(
+                user.getUsername(),
+                user.getPassword(),
+                String.valueOf(user.getRole())
+        );
     }
 }

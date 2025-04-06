@@ -3,7 +3,6 @@ package com.in6225.crms.userservice.controller;
 import com.in6225.crms.userservice.dto.AuthRequest;
 import com.in6225.crms.userservice.dto.AuthResponse;
 import com.in6225.crms.userservice.dto.UserDto;
-import com.in6225.crms.userservice.entity.User;
 import com.in6225.crms.userservice.service.AuthService;
 import com.in6225.crms.userservice.service.UserService;
 import jakarta.validation.Valid;
@@ -35,8 +34,8 @@ public class AuthController {
         authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(authRequest.getUsername(), authRequest.getPassword()));
 
-        User user = userService.findById(authRequest.getUsername());
-        String token =  authService.login(user.getUsername(), String.valueOf(user.getRole()));
+        UserDto userDto = userService.getByUsername(authRequest.getUsername());
+        String token =  authService.login(userDto.getUsername(), String.valueOf(userDto.getRole()));
 
         return new ResponseEntity<>(new AuthResponse(token), HttpStatus.OK);
     }

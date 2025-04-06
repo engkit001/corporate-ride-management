@@ -1,10 +1,11 @@
 package com.in6225.crms.userservice.service;
 
 import com.in6225.crms.userservice.dto.UserDto;
-import com.in6225.crms.userservice.entity.User;
+
+import java.util.List;
 
 public interface UserService {
-
     UserDto saveUser(UserDto userDto);
-    User findById(String username);
+    UserDto getByUsername(String username);
+    List<UserDto> getAll();
 }
