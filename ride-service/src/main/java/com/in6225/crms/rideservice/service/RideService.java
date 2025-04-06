@@ -10,9 +10,7 @@ import java.util.List;
 public interface RideService {
     RideDto getRideById(Long id);
 
-    List<RideDto> getRidesByUserIdAndStatus(String userId, String status);
-
-    List<RideDto> getRidesByDriverId(String driverId);
+    List<RideDto> getRidesByOptionalFilters(String userId, String driverId, String status);
 
     RideDto requestRide(RideRequestDto rideRequestDto);
 

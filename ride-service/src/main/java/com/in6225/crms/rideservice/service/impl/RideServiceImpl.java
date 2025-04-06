@@ -34,37 +34,12 @@ public class RideServiceImpl implements RideService {
     }
 
     @Override
-    public List<RideDto> getRidesByUserIdAndStatus(String userId, String status) {
-        List<Ride> rideList;
-
-        if ((userId == null || userId.isEmpty()) && (status == null || status.isEmpty())) {
-            // Case 1: both are null/empty
-            rideList = rideRepository.findAll();
+    public List<RideDto> getRidesByOptionalFilters(String userId, String driverId, String status) {
+        RideStatus rideStatus = null;
+        if (status != null) {
+            rideStatus = RideStatus.valueOf(status);
         }
-        else if (userId == null || userId.isEmpty()) {
-            // Case 2: only status is provided
-            rideList = rideRepository.findAllByStatus(RideStatus.valueOf(status));
-        }
-        else if (status == null || status.isEmpty()) {
-            // Case 3: only userId is provided
-            rideList = rideRepository.findAllByUserId(userId);
-        }
-        else {
-            // Case 4: both status and userId are provided
-            rideList = rideRepository.findAllByUserIdAndStatus(userId, RideStatus.valueOf(status));
-        }
-
-        List<RideDto> rideDtoList = new ArrayList<>();
-        for (Ride ride : rideList) {
-            RideDto rideDto = mapToDto(ride);
-            rideDtoList.add(rideDto);
-        }
-        return rideDtoList;
-    }
-
-    @Override
-    public List<RideDto> getRidesByDriverId(String driverId) {
-        List<Ride> rideList = rideRepository.findAllByDriverId(driverId);
+        List<Ride> rideList = rideRepository.findByOptionalFilters(userId, driverId, rideStatus);
         List<RideDto> rideDtoList = new ArrayList<>();
         for (Ride ride : rideList) {
             RideDto rideDto = mapToDto(ride);

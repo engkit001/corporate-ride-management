@@ -23,13 +23,13 @@ public class RideController {
     }
 
     @GetMapping
-    public ResponseEntity<List<RideDto>> getRidesByUserIdAndStatus(@RequestParam(required = false) String userId, String status) {
-        return new ResponseEntity<>(rideService.getRidesByUserIdAndStatus(userId, status), HttpStatus.OK);
-    }
-
-    @GetMapping("by-driver")
-    public ResponseEntity<List<RideDto>> getRidesByDriverId(@RequestParam String driverId) {
-        return new ResponseEntity<>(rideService.getRidesByDriverId(driverId), HttpStatus.OK);
+    public ResponseEntity<List<RideDto>> getRidesByOptionalFilters(
+            @RequestParam(required = false) String userId,
+            @RequestParam(required = false) String driverId,
+            @RequestParam(required = false) String status) {
+        return new ResponseEntity<>(
+                rideService.getRidesByOptionalFilters(userId, driverId, status),
+                HttpStatus.OK);
     }
 
     @PostMapping("request")
