@@ -23,6 +23,11 @@ public class GlobalExceptionHandler {
         return buildErrorResponse(HttpStatus.NOT_FOUND, "Ride Not Found", ex.getMessage());
     }
 
+    @ExceptionHandler(OpenRideExistsException.class)
+    public ResponseEntity<Map<String, Object>> handleOpenRideExistsException(OpenRideExistsException ex) {
+        return buildErrorResponse(HttpStatus.BAD_REQUEST, "Open Ride Exists", ex.getMessage());
+    }
+    
     private ResponseEntity<Map<String, Object>> buildErrorResponse(HttpStatus status, String error, String message) {
         Map<String, Object> response = new HashMap<>();
         response.put("timestamp", LocalDateTime.now());

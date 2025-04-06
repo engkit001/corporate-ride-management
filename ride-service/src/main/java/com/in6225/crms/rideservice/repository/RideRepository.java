@@ -14,4 +14,6 @@ public interface RideRepository extends JpaRepository<Ride, Long> {
     List<Ride> findAllByStatus(RideStatus status);
 
     List<Ride> findAllByUserIdAndStatus(String userId, RideStatus status);
+
+    List<Ride> findByUserIdAndStatusNotIn(String userId, List<RideStatus> statuses);
 }

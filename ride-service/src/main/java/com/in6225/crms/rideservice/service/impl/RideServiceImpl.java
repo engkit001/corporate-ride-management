@@ -6,6 +6,7 @@ import com.in6225.crms.rideservice.dto.RideDto;
 import com.in6225.crms.rideservice.dto.RideRequestDto;
 import com.in6225.crms.rideservice.enums.RideStatus;
 import com.in6225.crms.rideservice.exception.InvalidRideStateException;
+import com.in6225.crms.rideservice.exception.OpenRideExistsException;
 import com.in6225.crms.rideservice.exception.RideNotFoundException;
 import com.in6225.crms.rideservice.entity.Ride;
 import com.in6225.crms.rideservice.repository.RideRepository;
@@ -63,7 +64,14 @@ public class RideServiceImpl implements RideService {
 
     @Override
     public RideDto requestRide(RideRequestDto rideRequestDto) {
-        // TODO: Check for existing ride not COMPLETED or CANCELLED
+        // Check for existing ride not COMPLETED or CANCELLED
+        String userId = rideRequestDto.getUserId();
+        List<RideStatus> excluded = List.of(RideStatus.COMPLETED, RideStatus.CANCELLED);  // List of excluded statuses
+        List<Ride> rideList = rideRepository.findByUserIdAndStatusNotIn(userId, excluded);
+        if (!rideList.isEmpty()) {
+            throw new OpenRideExistsException(userId);
+        }
+
         Ride ride = new Ride();
         ride.setUserId(rideRequestDto.getUserId());
         ride.setPickupLocation(rideRequestDto.getPickupLocation());
