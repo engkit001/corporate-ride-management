@@ -30,12 +30,7 @@ public class DriverServiceImpl implements DriverService {
     public DriverDto getDriverById(String id) {
         Driver driver = driverRepository.findById(id)
                 .orElseThrow(() -> new DriverNotFoundException(id));
-        return new DriverDto(
-                driver.getId(),
-                driver.getName(),
-                driver.getPhoneNumber(),
-                driver.getStatus()
-        );
+        return mapToDto(driver);
     }
 
     @Override
@@ -52,12 +47,7 @@ public class DriverServiceImpl implements DriverService {
 
         List<DriverDto> driverDtoList = new ArrayList<>();
         for (Driver driver : driverList) {
-            DriverDto driverDto = new DriverDto(
-                    driver.getId(),
-                    driver.getName(),
-                    driver.getPhoneNumber(),
-                    driver.getStatus()
-            );
+            DriverDto driverDto = mapToDto(driver);
             driverDtoList.add(driverDto);
         }
         return driverDtoList;
@@ -78,11 +68,15 @@ public class DriverServiceImpl implements DriverService {
         );
         Driver savedDriver = driverRepository.save(driver);
 
+        return mapToDto(savedDriver);
+    }
+
+    private DriverDto mapToDto(Driver driver) {
         return new DriverDto(
-                savedDriver.getId(),
-                savedDriver.getName(),
-                savedDriver.getPhoneNumber(),
-                savedDriver.getStatus()
+                driver.getId(),
+                driver.getName(),
+                driver.getPhoneNumber(),
+                driver.getStatus()
         );
     }
 
