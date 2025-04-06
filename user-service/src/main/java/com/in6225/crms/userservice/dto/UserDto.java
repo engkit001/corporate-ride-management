@@ -1,7 +1,7 @@
 package com.in6225.crms.userservice.dto;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
@@ -13,7 +13,7 @@ import lombok.Setter;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class RegistrationRequest {
+public class UserDto {
     @NotBlank(message = "Username is required")
     @Size(max = 10, message = "Username must be at most 10 characters")
     private String username;

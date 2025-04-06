@@ -1,6 +1,5 @@
 package com.in6225.crms.userservice.dto;
 
-import com.in6225.crms.userservice.enums.Role;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
