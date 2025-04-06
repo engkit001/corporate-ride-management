@@ -63,6 +63,17 @@ public class RideServiceImpl implements RideService {
     }
 
     @Override
+    public List<RideDto> getRidesByDriverId(String driverId) {
+        List<Ride> rideList = rideRepository.findAllByDriverId(driverId);
+        List<RideDto> rideDtoList = new ArrayList<>();
+        for (Ride ride : rideList) {
+            RideDto rideDto = mapToDto(ride);
+            rideDtoList.add(rideDto);
+        }
+        return rideDtoList;
+    }
+
+    @Override
     public RideDto requestRide(RideRequestDto rideRequestDto) {
         // Check for existing ride not COMPLETED or CANCELLED
         String userId = rideRequestDto.getUserId();

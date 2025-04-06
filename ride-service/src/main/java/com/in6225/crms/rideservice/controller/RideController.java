@@ -27,6 +27,11 @@ public class RideController {
         return new ResponseEntity<>(rideService.getRidesByUserIdAndStatus(userId, status), HttpStatus.OK);
     }
 
+    @GetMapping("by-driver")
+    public ResponseEntity<List<RideDto>> getRidesByDriverId(@RequestParam String driverId) {
+        return new ResponseEntity<>(rideService.getRidesByDriverId(driverId), HttpStatus.OK);
+    }
+
     @PostMapping("request")
     public ResponseEntity<RideDto> requestRide(@Valid @RequestBody RideRequestDto rideRequestDto) {
         return new ResponseEntity<>(rideService.requestRide(rideRequestDto), HttpStatus.CREATED);

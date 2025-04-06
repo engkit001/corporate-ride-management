@@ -12,6 +12,8 @@ public interface RideService {
 
     List<RideDto> getRidesByUserIdAndStatus(String userId, String status);
 
+    List<RideDto> getRidesByDriverId(String driverId);
+
     RideDto requestRide(RideRequestDto rideRequestDto);
 
     RideDto startRide(Long id);
