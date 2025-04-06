@@ -25,7 +25,7 @@ public class UserService {
         User savedUser = userRepository.save(user);
         return new UserDto(
           user.getUsername(),
-          "*****",
+          "*****", // TODO: Use another dto to omit this
           String.valueOf(user.getRole())
         );
     }
