@@ -29,19 +29,7 @@ public class RideServiceImpl implements RideService {
     public RideDto getRideById(Long id) {
         Ride ride = rideRepository.findById(id)
                 .orElseThrow(() -> new RideNotFoundException(String.valueOf(id)));
-        return new RideDto(
-                ride.getId(),
-                ride.getUserId(),
-                ride.getDriverId(),
-                ride.getPickupLocation(),
-                ride.getDropoffLocation(),
-                ride.getRideRequestedTime(),
-                ride.getRideAssignedTime(),
-                ride.getRideStartTime(),
-                ride.getRideEndTime(),
-                ride.getRideCanceledTime(),
-                ride.getStatus()
-        );
+        return mapToDto(ride);
     }
 
     @Override
@@ -58,19 +46,7 @@ public class RideServiceImpl implements RideService {
 
         List<RideDto> rideDtoList = new ArrayList<>();
         for (Ride ride : rideList) {
-            RideDto rideDto = new RideDto(
-                    ride.getId(),
-                    ride.getUserId(),
-                    ride.getDriverId(),
-                    ride.getPickupLocation(),
-                    ride.getDropoffLocation(),
-                    ride.getRideRequestedTime(),
-                    ride.getRideAssignedTime(),
-                    ride.getRideStartTime(),
-                    ride.getRideEndTime(),
-                    ride.getRideCanceledTime(),
-                    ride.getStatus()
-            );
+            RideDto rideDto = mapToDto(ride);
             rideDtoList.add(rideDto);
         }
         return rideDtoList;
@@ -90,19 +66,7 @@ public class RideServiceImpl implements RideService {
         // Publish RIDE_REQUESTED event to Kafka
         kafkaTemplate.send("ride-requested", savedRide.getId().toString());
 
-        return new RideDto(
-                savedRide.getId(),
-                savedRide.getUserId(),
-                savedRide.getDriverId(),
-                savedRide.getPickupLocation(),
-                savedRide.getDropoffLocation(),
-                savedRide.getRideRequestedTime(),
-                savedRide.getRideAssignedTime(),
-                savedRide.getRideStartTime(),
-                savedRide.getRideEndTime(),
-                savedRide.getRideCanceledTime(),
-                savedRide.getStatus()
-        );
+        return mapToDto(savedRide);
     }
 
     @Scheduled(fixedDelay = 60000) // Run every 60 seconds
@@ -129,19 +93,7 @@ public class RideServiceImpl implements RideService {
         // Publish RIDE_STARTED event to Kafka
         kafkaTemplate.send("ride-started", ride.getId() + ":" + ride.getDriverId());
 
-        return new RideDto(
-                savedRide.getId(),
-                savedRide.getUserId(),
-                savedRide.getDriverId(),
-                savedRide.getPickupLocation(),
-                savedRide.getDropoffLocation(),
-                savedRide.getRideRequestedTime(),
-                savedRide.getRideAssignedTime(),
-                savedRide.getRideStartTime(),
-                savedRide.getRideEndTime(),
-                savedRide.getRideCanceledTime(),
-                savedRide.getStatus()
-        );
+        return mapToDto(savedRide);
     }
 
     @Override
@@ -158,20 +110,7 @@ public class RideServiceImpl implements RideService {
         // Publish RIDE_COMPLETED event to Kafka
         kafkaTemplate.send("ride-completed", ride.getId() + ":" + ride.getDriverId());
 
-        return new RideDto(
-                savedRide.getId(),
-                savedRide.getUserId(),
-                savedRide.getDriverId(),
-                savedRide.getPickupLocation(),
-                savedRide.getDropoffLocation(),
-                savedRide.getRideRequestedTime(),
-                savedRide.getRideAssignedTime(),
-                savedRide.getRideStartTime(),
-                savedRide.getRideEndTime(),
-                savedRide.getRideCanceledTime(),
-                savedRide.getStatus()
-        );
-    }
+        return mapToDto(savedRide);    }
 
     @Override
     public RideDto cancelRide(Long id) {
@@ -186,24 +125,28 @@ public class RideServiceImpl implements RideService {
                 // Publish RIDE_STARTED event to Kafka
                 kafkaTemplate.send("ride-cancelled", ride.getId() + ":" + ride.getDriverId());
 
-                return new RideDto(
-                        savedRide.getId(),
-                        savedRide.getUserId(),
-                        savedRide.getDriverId(),
-                        savedRide.getPickupLocation(),
-                        savedRide.getDropoffLocation(),
-                        savedRide.getRideRequestedTime(),
-                        savedRide.getRideAssignedTime(),
-                        savedRide.getRideStartTime(),
-                        savedRide.getRideEndTime(),
-                        savedRide.getRideCanceledTime(),
-                        savedRide.getStatus()
-                );
+                return mapToDto(savedRide);
             }
             // REQUESTED, ONGOING, COMPLETED, CANCELLED
             default ->
                     throw new InvalidRideStateException("Ride cannot be cancelled: " + ride.getStatus());
         }
+    }
+
+    private RideDto mapToDto(Ride ride) {
+        return new RideDto(
+                ride.getId(),
+                ride.getUserId(),
+                ride.getDriverId(),
+                ride.getPickupLocation(),
+                ride.getDropoffLocation(),
+                ride.getRideRequestedTime(),
+                ride.getRideAssignedTime(),
+                ride.getRideStartTime(),
+                ride.getRideEndTime(),
+                ride.getRideCanceledTime(),
+                ride.getStatus()
+        );
     }
 
     @Override
