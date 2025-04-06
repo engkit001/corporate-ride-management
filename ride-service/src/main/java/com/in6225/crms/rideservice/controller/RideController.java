@@ -23,8 +23,8 @@ public class RideController {
     }
 
     @GetMapping
-    public ResponseEntity<List<RideDto>> getRidesByUserId(@RequestParam(required = false) String userId) {
-        return new ResponseEntity<>(rideService.getRidesByUserId(userId), HttpStatus.OK);
+    public ResponseEntity<List<RideDto>> getRidesByUserIdAndStatus(@RequestParam(required = false) String userId, String status) {
+        return new ResponseEntity<>(rideService.getRidesByUserIdAndStatus(userId, status), HttpStatus.OK);
     }
 
     @PostMapping("request")

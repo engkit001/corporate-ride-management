@@ -33,15 +33,24 @@ public class RideServiceImpl implements RideService {
     }
 
     @Override
-    public List<RideDto> getRidesByUserId(String userId) {
+    public List<RideDto> getRidesByUserIdAndStatus(String userId, String status) {
         List<Ride> rideList;
 
-        // Get all drivers if no status is provided
-        if (userId == null || userId.isEmpty()) {
+        if ((userId == null || userId.isEmpty()) && (status == null || status.isEmpty())) {
+            // Case 1: both are null/empty
             rideList = rideRepository.findAll();
         }
+        else if (userId == null || userId.isEmpty()) {
+            // Case 2: only status is provided
+            rideList = rideRepository.findAllByStatus(RideStatus.valueOf(status));
+        }
+        else if (status == null || status.isEmpty()) {
+            // Case 3: only userId is provided
+            rideList = rideRepository.findAllByUserId(userId);
+        }
         else {
-            rideList = rideRepository.findByUserId(userId);
+            // Case 4: both status and userId are provided
+            rideList = rideRepository.findAllByUserIdAndStatus(userId, RideStatus.valueOf(status));
         }
 
         List<RideDto> rideDtoList = new ArrayList<>();
