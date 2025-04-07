@@ -1,5 +1,6 @@
 package com.in6225.crms.rideevents;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -14,4 +15,24 @@ import java.io.Serializable;
 public class RideStartedEvent implements Serializable {
     private Long rideId;
     private String driverId;
+
+    // Convert object to JSON
+    public String toJson() {
+        try {
+            ObjectMapper mapper = new ObjectMapper();
+            return mapper.writeValueAsString(this);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    // Static method to create object from JSON
+    public static RideStartedEvent fromJson(String json) {
+        try {
+            ObjectMapper mapper = new ObjectMapper();
+            return mapper.readValue(json, RideStartedEvent.class);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
 }

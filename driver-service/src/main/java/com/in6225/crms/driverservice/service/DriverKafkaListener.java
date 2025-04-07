@@ -15,32 +15,25 @@ public class DriverKafkaListener {
 
     @KafkaListener(topics = "ride-requested", groupId = "driver-service-group")
     public void handleRideRequestedEvent(String message) {
-        RideRequestedEvent rideRequestedEvent = new RideRequestedEvent(Long.valueOf(message));
+        RideRequestedEvent rideRequestedEvent = RideRequestedEvent.fromJson(message);
         driverService.handleRideRequestedEvent(rideRequestedEvent);
     }
 
     @KafkaListener(topics = "ride-started", groupId = "driver-service-group")
     public void handleRideStartedEvent(String message) {
-        String[] parts = message.split(":");
-        RideStartedEvent rideStartedEvent = new RideStartedEvent(Long.valueOf(parts[0]),parts[1]);
+        RideStartedEvent rideStartedEvent = RideStartedEvent.fromJson(message);
         driverService.handleRideStartedEvent(rideStartedEvent);
     }
 
     @KafkaListener(topics = "ride-completed", groupId = "driver-service-group")
     public void handleRideCompletedEvent(String message) {
-        String[] parts = message.split(":");
-        RideCompletedEvent rideCompletedEvent = new RideCompletedEvent(Long.valueOf(parts[0]),parts[1]);
+        RideCompletedEvent rideCompletedEvent = RideCompletedEvent.fromJson(message);
         driverService.handleRideCompletedEvent(rideCompletedEvent);
     }
 
     @KafkaListener(topics = "ride-cancelled", groupId = "driver-service-group")
     public void handleRideCancelledEvent(String message) {
-        String[] parts = message.split(":");
-        if (!parts[1].isEmpty()) {
-            RideCancelledEvent rideCancelledEvent = new RideCancelledEvent(Long.valueOf(parts[0]), parts[1]);
-            driverService.handleRideCancelledEvent(rideCancelledEvent);
-        }
+        RideCancelledEvent rideCancelledEvent = RideCancelledEvent.fromJson(message);
+        driverService.handleRideCancelledEvent(rideCancelledEvent);
     }
-
-
 }

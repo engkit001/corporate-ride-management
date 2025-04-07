@@ -8,10 +8,7 @@ import com.in6225.crms.driverservice.exception.DriverNotFoundException;
 import com.in6225.crms.driverservice.exception.InvalidDriverStateException;
 import com.in6225.crms.driverservice.repository.DriverRepository;
 import com.in6225.crms.driverservice.service.DriverService;
-import com.in6225.crms.rideevents.RideCancelledEvent;
-import com.in6225.crms.rideevents.RideCompletedEvent;
-import com.in6225.crms.rideevents.RideRequestedEvent;
-import com.in6225.crms.rideevents.RideStartedEvent;
+import com.in6225.crms.rideevents.*;
 import lombok.AllArgsConstructor;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
@@ -92,10 +89,17 @@ public class DriverServiceImpl implements DriverService {
             driverRepository.save(driver);
 
             // Publish DRIVER_ASSIGNED event
-            kafkaTemplate.send("driver-assigned", rideRequestedEvent.getRideId() + ":" + driver.getId());
+            DriverAssignedEvent driverAssignedEvent = new DriverAssignedEvent(
+                    rideRequestedEvent.getRideId(),
+                    driver.getId()
+            );
+            kafkaTemplate.send("driver-assigned", driverAssignedEvent.toJson());
         } else {
             // Publish NO_DRIVER_AVAILABLE event
-            kafkaTemplate.send("no-driver-available", String.valueOf(rideRequestedEvent.getRideId()));
+            NoDriverAvailableEvent noDriverAvailableEvent = new NoDriverAvailableEvent(
+                    rideRequestedEvent.getRideId()
+            );
+            kafkaTemplate.send("no-driver-available", noDriverAvailableEvent.toJson());
         }
     }
 
@@ -130,6 +134,9 @@ public class DriverServiceImpl implements DriverService {
     @Override
     public void handleRideCancelledEvent(RideCancelledEvent rideCancelledEvent) {
         String driverId = rideCancelledEvent.getDriverId();
+        if (driverId.isEmpty()) {
+            return;
+        }
         Driver driver = driverRepository.findById(driverId)
                 .orElseThrow(() -> new DriverNotFoundException(driverId));
 

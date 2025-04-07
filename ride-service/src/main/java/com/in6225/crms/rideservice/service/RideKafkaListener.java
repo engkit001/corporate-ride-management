@@ -13,14 +13,13 @@ public class RideKafkaListener {
 
     @KafkaListener(topics = "driver-assigned", groupId = "ride-service-group")
     public void handleDriverAssignedEvent(String message) {
-        String[] parts = message.split(":");
-        DriverAssignedEvent driverAssignedEvent = new DriverAssignedEvent(Long.valueOf(parts[0]), parts[1]);
+        DriverAssignedEvent driverAssignedEvent = DriverAssignedEvent.fromJson(message);
         rideService.handleDriverAssignedEvent(driverAssignedEvent);
     }
 
     @KafkaListener(topics = "no-driver-available", groupId = "ride-service-group")
     public void handleNoDriverAvailableEvent(String message) {
-        NoDriverAvailableEvent noDriverAvailableEvent = new NoDriverAvailableEvent(Long.valueOf(message));
+        NoDriverAvailableEvent noDriverAvailableEvent = NoDriverAvailableEvent.fromJson(message);
         rideService.handleNoDriverAvailableEvent(noDriverAvailableEvent);
     }
 }

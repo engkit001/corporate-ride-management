@@ -1,7 +1,6 @@
 package com.in6225.crms.rideservice.service.impl;
 
-import com.in6225.crms.rideevents.DriverAssignedEvent;
-import com.in6225.crms.rideevents.NoDriverAvailableEvent;
+import com.in6225.crms.rideevents.*;
 import com.in6225.crms.rideservice.dto.RideDto;
 import com.in6225.crms.rideservice.dto.RideRequestDto;
 import com.in6225.crms.rideservice.enums.RideStatus;
@@ -67,7 +66,10 @@ public class RideServiceImpl implements RideService {
         Ride savedRide = rideRepository.save(ride);
 
         // Publish RIDE_REQUESTED event to Kafka
-        kafkaTemplate.send("ride-requested", savedRide.getId().toString());
+        RideRequestedEvent rideRequestedEvent = new RideRequestedEvent(
+                savedRide.getId()
+        );
+        kafkaTemplate.send("ride-requested", rideRequestedEvent.toJson());
 
         return mapToDto(savedRide);
     }
@@ -78,7 +80,10 @@ public class RideServiceImpl implements RideService {
 
         for (Ride ride : pendingRides) {
             // Publish RIDE_REQUESTED event to Kafka
-            kafkaTemplate.send("ride-requested", ride.getId().toString());
+            RideRequestedEvent rideRequestedEvent = new RideRequestedEvent(
+                    ride.getId()
+            );
+            kafkaTemplate.send("ride-requested", rideRequestedEvent.toJson());
         }
     }
 
@@ -94,7 +99,11 @@ public class RideServiceImpl implements RideService {
         Ride savedRide = rideRepository.save(ride);
 
         // Publish RIDE_STARTED event to Kafka
-        kafkaTemplate.send("ride-started", ride.getId() + ":" + ride.getDriverId());
+        RideStartedEvent rideStartedEvent = new RideStartedEvent(
+                ride.getId(),
+                ride.getDriverId()
+        );
+        kafkaTemplate.send("ride-started", rideStartedEvent.toJson());
 
         return mapToDto(savedRide);
     }
@@ -111,7 +120,11 @@ public class RideServiceImpl implements RideService {
         Ride savedRide = rideRepository.save(ride);
 
         // Publish RIDE_COMPLETED event to Kafka
-        kafkaTemplate.send("ride-completed", ride.getId() + ":" + ride.getDriverId());
+        RideCompletedEvent rideCompletedEvent = new RideCompletedEvent(
+                ride.getId(),
+                ride.getDriverId()
+        );
+        kafkaTemplate.send("ride-completed", rideCompletedEvent.toJson());
 
         return mapToDto(savedRide);    }
 
@@ -125,8 +138,12 @@ public class RideServiceImpl implements RideService {
                 ride.setStatus(RideStatus.CANCELLED);
                 Ride savedRide = rideRepository.save(ride);
 
-                // Publish RIDE_STARTED event to Kafka
-                kafkaTemplate.send("ride-cancelled", ride.getId() + ":" + ride.getDriverId());
+                // Publish RIDE_CANCELLED event to Kafka
+                RideCancelledEvent rideCancelledEvent = new RideCancelledEvent(
+                        ride.getId(),
+                        ride.getDriverId()
+                );
+                kafkaTemplate.send("ride-cancelled", rideCancelledEvent.toJson());
 
                 return mapToDto(savedRide);
             }
