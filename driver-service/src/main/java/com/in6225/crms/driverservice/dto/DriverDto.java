@@ -27,6 +27,10 @@ public class DriverDto {
     @Pattern(regexp = "^[0-9]{8}$", message = "Phone number must be exactly 8 digits")
     private String phoneNumber;
 
+    @NotBlank(message = "Vehicle number is required")
+    @Size(max = 10, message = "Vehicle number must be at most 10 characters")
+    private String vehicleNumber;
+
     private DriverStatus status;
 }
 

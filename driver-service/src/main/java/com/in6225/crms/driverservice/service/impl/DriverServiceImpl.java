@@ -64,6 +64,7 @@ public class DriverServiceImpl implements DriverService {
                 driverId,
                 driverDto.getName(),
                 driverDto.getPhoneNumber(),
+                driverDto.getVehicleNumber(),
                 DriverStatus.AVAILABLE
         );
         Driver savedDriver = driverRepository.save(driver);
@@ -76,6 +77,7 @@ public class DriverServiceImpl implements DriverService {
                 driver.getId(),
                 driver.getName(),
                 driver.getPhoneNumber(),
+                driver.getVehicleNumber(),
                 driver.getStatus()
         );
     }

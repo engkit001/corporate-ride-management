@@ -19,6 +19,7 @@ public class Driver {
     private String id;
     private String name;
     private String phoneNumber;
+    private String vehicleNumber;
 
     @Enumerated(EnumType.STRING)
     private DriverStatus status;
