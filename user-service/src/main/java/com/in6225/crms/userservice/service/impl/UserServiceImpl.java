@@ -3,6 +3,7 @@ package com.in6225.crms.userservice.service.impl;
 import com.in6225.crms.userservice.dto.UserDto;
 import com.in6225.crms.userservice.entity.User;
 import com.in6225.crms.userservice.enums.Role;
+import com.in6225.crms.userservice.exception.UserAlreadyExistsException;
 import com.in6225.crms.userservice.exception.UserNotFoundException;
 import com.in6225.crms.userservice.repository.UserRepository;
 import com.in6225.crms.userservice.service.UserService;
@@ -20,6 +21,11 @@ public class UserServiceImpl implements UserService {
     private final PasswordEncoder passwordEncoder;
 
     public UserDto saveUser(UserDto userDto) {
+        String username = userDto.getUsername();
+        if (userRepository.findByUsername(username).isPresent()) {
+            throw new UserAlreadyExistsException(username);
+        }
+
         User user = new User();
         user.setUsername(userDto.getUsername());
         user.setPassword(passwordEncoder.encode(userDto.getPassword()));
