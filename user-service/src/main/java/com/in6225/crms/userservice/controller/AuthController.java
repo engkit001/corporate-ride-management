@@ -24,11 +24,6 @@ public class AuthController {
     private final UserService userService;
     private final AuthService authService;
 
-    @PostMapping("register")
-    public ResponseEntity<UserDto> register(@Valid @RequestBody UserDto userDto) {
-        return new ResponseEntity<>(userService.saveUser(userDto), HttpStatus.CREATED);
-    }
-
     @PostMapping("login")
     public ResponseEntity<AuthResponse> login(@RequestBody AuthRequest authRequest) {
         authenticationManager.authenticate(
