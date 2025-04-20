@@ -90,3 +90,9 @@ Manages notifications for ride status changes; uses Twilio API.
 
 ![Ride Commencement, Completion](https://github.com/user-attachments/assets/d46c7212-da23-4968-adcb-98150c90825d)
 
+# Running the application
+Download docker/compose.yaml into a folder and execute: 
+
+docker compose up -d
+
+After all services are running (this may take a few minutes), open http://localhost:3000 and login as admin with password 12345 .
