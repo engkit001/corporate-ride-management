@@ -44,7 +44,7 @@ This project demonstrates the use of a microservices-based approach with event-d
 Spring Boot: web, jpa, validation, security, mysql, kafka, swagger, jjwt, lombok, servlet, twilio
 
 ## Microservices Overview
-1. Ride Service \
+### 1. Ride Service
 Handles ride creation & lifecycle updates and publishes events for other services to react to. 
 
 Endpoints:
@@ -59,7 +59,7 @@ Event handlers:
 * DriverAssignedEvent → assigns driver and marks ride as assigned
 * NoDriverAvailableEvent → marks ride as pending
 
-2. Driver Service \
+### 2. Driver Service
 Manages drivers and their availability.
 
 Endpoints:
@@ -73,7 +73,7 @@ Event handlers:
 * RideCompletedEvent → marks driver as available
 * RideCancelledEvent → marks driver as available or ignored if no driver was already assigned (for pending rides)
 
-3. User Service \
+### 3. User Service
 Manages users’ registration, authentication.
 
 Endpoints:
@@ -82,7 +82,7 @@ Endpoints:
 * GET /users/{username} → returns user by username
 * POST /auth/login → authenticates and returns JWT token
 
-4. Notification Service \
+### 4. Notification Service
 Manages notifications for ride status changes; uses Twilio API.
 
 # Sequence Diagrams
