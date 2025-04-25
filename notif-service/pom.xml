@@ -68,6 +68,11 @@
             <artifactId>lombok</artifactId>
             <optional>true</optional>
         </dependency>
+        <dependency>
+            <groupId>com.in6225.crms</groupId>
+            <artifactId>ride-events</artifactId>
+            <version>1.0.0</version>
+        </dependency>
     </dependencies>
 
     <build>

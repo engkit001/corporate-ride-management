@@ -1,5 +1,6 @@
 package com.in6225.crms.notifservice.service;
 
+import com.in6225.crms.rideevents.DriverAssignedEvent;
 import jakarta.annotation.security.DenyAll;
 import lombok.AllArgsConstructor;
 import org.springframework.kafka.annotation.KafkaListener;
@@ -12,6 +13,7 @@ public class NotifKafkaListener {
 
     @KafkaListener(topics = "driver-assigned", groupId = "notif-service-group")
     public void handleDriverAssignedEvent(String message) {
-        notifService.sendNotif(message);
+        DriverAssignedEvent driverAssignedEvent = DriverAssignedEvent.fromJson(message);
+        notifService.handleDriverAssignedEvent(driverAssignedEvent);
     }
 }
