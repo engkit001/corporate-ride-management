@@ -91,7 +91,9 @@ public class DriverServiceImpl implements DriverService {
             // Publish DRIVER_ASSIGNED event
             DriverAssignedEvent driverAssignedEvent = new DriverAssignedEvent(
                     rideRequestedEvent.getRideId(),
-                    driver.getId()
+                    driver.getId(),
+                    driver.getPhoneNumber(),
+                    driver.getVehicleNumber()
             );
             kafkaTemplate.send("driver-assigned", driverAssignedEvent.toJson());
         } else {

@@ -15,6 +15,8 @@ import java.io.Serializable;
 public class DriverAssignedEvent implements Serializable {
     private Long rideId;
     private String driverId;
+    private String phoneNumber;
+    private String vehicleNumber;
 
     // Convert object to JSON
     public String toJson() {
